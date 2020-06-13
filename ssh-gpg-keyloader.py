@@ -2,6 +2,7 @@
 import glob
 import os.path
 import subprocess
+import sys
 
 
 def cli():
@@ -10,13 +11,17 @@ def cli():
             key = subprocess.run(
                 ['gpg2', '--quiet', '--batch', '--decrypt', keyfile],
                 check=True,
-                stdout=subprocess.PIPE
+                stdout=subprocess.PIPE,
             ).stdout
-            subprocess.run(
+            output = subprocess.run(
                 ['ssh-add', '-k', '-q', '-'],
+                check=True,
                 input=key,
-                check=True
-            )
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            ).stdout
+            if output != b'Identity added: (stdin) ((stdin))\n':
+                sys.stderr.write(output.decode())
         except subprocess.CalledProcessError as e:
             print(e)
 
