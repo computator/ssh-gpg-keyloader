@@ -1,13 +1,13 @@
 from setuptools import setup
 
 setup(
-    name='ssh-gpg-keyloader',
+    name='sshkeystore',
     description="Load SSH keys from a directory of GPG encrypted keys",
-    url='https://github.com/computator/ssh-gpg-keyloader',
-    py_modules=['ssh-gpg-keyloader'],
+    url='https://github.com/computator/sshkeystore',
+    packages=['sshkeystore'],
     entry_points={
         'console_scripts': [
-            'ssh-gpg-keyloader=ssh-gpg-keyloader:cli',
+            'sshkeystore=sshkeystore:cli',
         ]
     }
 )

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import getpass
 import glob
 import os.path
@@ -74,7 +73,3 @@ def cli():
                     )
                     os.chmod(fno, newmode)
                     f.write(pubkey)
-
-
-if __name__ == '__main__':
-    cli()
