@@ -1,3 +1,4 @@
+import glob
 import os.path
 import stat
 
@@ -23,3 +24,9 @@ class Keystore:
         if not os.path.exists(keypath):
             return None
         return keys.Keypair(keypath, key)
+
+    def __iter__(self):
+        return (
+            keys.Keypair(keypath)
+            for keypath in glob.iglob(os.path.join(self.store, '*' + self.KEY_SUFFIX))
+        )
