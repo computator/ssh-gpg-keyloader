@@ -4,10 +4,10 @@ import stat
 
 from . import keys
 
+KEY_SUFFIX = '.key.gpg'
+
 
 class Keystore:
-    KEY_SUFFIX = '.key.gpg'
-
     def __init__(self, path):
         path = os.path.abspath(os.path.expanduser(path))
         if not os.path.isdir(path):
@@ -20,7 +20,7 @@ class Keystore:
             raise ValueError(f"'{key}' contains a path separator")
         elif not path[1]:
             raise ValueError(f"'key' is empty")
-        keypath = os.path.join(self.store, path[1] + self.KEY_SUFFIX)
+        keypath = os.path.join(self.store, path[1] + KEY_SUFFIX)
         if not os.path.exists(keypath):
             return None
         return keys.Keypair(keypath, key)
@@ -28,5 +28,5 @@ class Keystore:
     def __iter__(self):
         return (
             keys.Keypair(keypath)
-            for keypath in glob.iglob(os.path.join(self.store, '*' + self.KEY_SUFFIX))
+            for keypath in glob.iglob(os.path.join(self.store, '*' + KEY_SUFFIX))
         )
