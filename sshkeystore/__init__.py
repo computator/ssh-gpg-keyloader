@@ -1,9 +1,11 @@
 import getpass
-import glob
 import os.path
 import stat
 import subprocess
 import sys
+
+from . import store
+from .keys import KeyLoadError
 
 
 def make_pubkey_dir():
@@ -30,41 +32,31 @@ def make_pubkey_dir():
 
 def cli():
     pubdir = None
-    for keyfile in glob.iglob(os.path.expanduser('~/.ssh-keystore/*.key.gpg')):
+    for kp in store.Keystore('~/.ssh-keystore'):
         try:
-            name = os.path.basename(keyfile)[:-8]
-            key = subprocess.run(
-                ['gpg2', '--quiet', '--batch', '--decrypt', keyfile],
-                check=True,
-                stdout=subprocess.PIPE,
-            ).stdout
             output = subprocess.run(
                 ['ssh-add', '-k', '-q', '-'],
                 check=True,
-                input=key,
+                input=kp.private(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             ).stdout
             if output != b'Identity added: (stdin) ((stdin))\n':
                 sys.stderr.write(output.decode())
         except subprocess.CalledProcessError as e:
-            print(f"{e}\nError adding private key '{name}'")
+            print(f"{e}\nError adding private key '{kp.name}' to agent")
+        except KeyLoadError as e:
+            print(f"Error loading key '{kp.name}': {e}")
         else:
-            print(f"Added '{name}'")
+            print(f"Added '{kp.name}'")
             try:
-                pubkey = subprocess.run(
-                    ['ssh-keygen', '-y', '-f', '/proc/self/fd/0'],
-                    check=True,
-                    input=key,
-                    stdout=subprocess.PIPE,
-                ).stdout
-                pubkey = f'{pubkey.decode().strip()} ssh-gpg-keyloader:{name}'
-            except subprocess.CalledProcessError as e:
-                print(f"{e}\nError retriving public key for '{name}'")
+                pubkey = kp.public()
+            except KeyLoadError as e:
+                print(f"Error loading public key for '{kp.name}': {e}")
             else:
                 if not pubdir:
                     pubdir = make_pubkey_dir()
-                with open(os.path.join(pubdir, f'{name}.pub'), 'w') as f:
+                with open(os.path.join(pubdir, f'{kp.name}.pub'), 'w') as f:
                     fno = f.fileno()
                     info = os.stat(fno)
                     # remove write and execute permissions for others
