@@ -1,7 +1,5 @@
-import subprocess
-import sys
-
 from . import store
+from .agent import Agent, AgentError
 from .keys import KeyLoadError
 
 
@@ -13,17 +11,9 @@ def cli():
         print(f"Error getting PubdirStore: {e}")
     for kp in store.Keystore.get_default_store():
         try:
-            output = subprocess.run(
-                ['ssh-add', '-k', '-q', '-'],
-                check=True,
-                input=kp.private(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            ).stdout
-            if output != b'Identity added: (stdin) ((stdin))\n':
-                sys.stderr.write(output.decode())
-        except subprocess.CalledProcessError as e:
-            print(f"{e}\nError adding private key '{kp.name}' to agent")
+            Agent.addkey(kp.private())
+        except AgentError as e:
+            print(f"Error adding key '{kp.name}' to agent: {e}")
         except KeyLoadError as e:
             print(f"Error loading key '{kp.name}': {e}")
         else:
