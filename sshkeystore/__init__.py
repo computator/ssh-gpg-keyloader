@@ -32,7 +32,7 @@ def make_pubkey_dir():
 
 def cli():
     pubdir = None
-    for kp in store.Keystore('~/.ssh-keystore'):
+    for kp in store.Keystore.get_default_store():
         try:
             output = subprocess.run(
                 ['ssh-add', '-k', '-q', '-'],

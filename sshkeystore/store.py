@@ -8,6 +8,10 @@ KEY_SUFFIX = '.key.gpg'
 
 
 class Keystore:
+    @classmethod
+    def get_default_store(cls):
+        return cls('~/.ssh-keystore')
+
     def __init__(self, path):
         path = os.path.abspath(os.path.expanduser(path))
         if not os.path.isdir(path):
