@@ -1,27 +1,37 @@
-import sys
+import argparse
 
-from . import store
-from .agent import Agent, AgentError
-from .keys import KeyLoadError
+from . import cmd
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Manage a directory of GPG encrypted SSH keys"
+    )
+    parser.add_argument('-S', '--store', help="location of the encrypted keystore")
+    parser.add_argument(
+        '-P',
+        '--pubdir',
+        help="temporary location to store the corresponding public keys",
+    )
+    sub = parser.add_subparsers(dest='cmd', description="choose an action to perform")
+
+    cmd_load = sub.add_parser('load', help="loads a single key into the agent")
+    cmd_load.add_argument('key')
+
+    cmd_loadall = sub.add_parser(
+        'loadall', help="loads all keys in the keystore into the agent"
+    )
+
+    args = parser.parse_args()
+    if not args.cmd:
+        parser.error("subcommand is required")
+    return args
 
 
 def cli():
+    args = parse_args()
     try:
-        pubstore = store.PubdirStore.get_default_store()
-    except Exception as e:
-        pubstore = None
-        print(f"Error getting PubdirStore: {e}", file=sys.stderr)
-    for kp in store.Keystore.get_default_store():
-        try:
-            Agent.addkey(kp.private())
-        except AgentError as e:
-            print(f"Error adding key '{kp.name}' to agent: {e}", file=sys.stderr)
-        except KeyLoadError as e:
-            print(f"Error loading key '{kp.name}': {e}", file=sys.stderr)
-        else:
-            print(f"Added '{kp.name}'")
-            try:
-                if pubstore:
-                    pubstore.add(kp.name, kp.public())
-            except KeyLoadError as e:
-                print(f"Error loading public key for '{kp.name}': {e}", file=sys.stderr)
+        command = getattr(cmd, args.cmd)
+    except AttributeError:
+        raise Exception(f"Invalid command '{args.cmd}'")
+    command(args)
