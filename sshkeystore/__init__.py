@@ -15,11 +15,22 @@ def parse_args():
     )
     sub = parser.add_subparsers(dest='cmd', description="choose an action to perform")
 
+    # load
     cmd_load = sub.add_parser('load', help="loads a single key into the agent")
-    cmd_load.add_argument('key')
+    cmd_load.add_argument('keyname', help="The name of the key to load")
 
-    cmd_loadall = sub.add_parser(
-        'loadall', help="loads all keys in the keystore into the agent"
+    # loadall
+    sub.add_parser('loadall', help="loads all keys in the keystore into the agent")
+
+    # insert
+    cmd_insert = sub.add_parser(
+        'insert', help="Encrypts a SSH private key and inserts it into the keystore"
+    )
+    cmd_insert.add_argument('name', help="The name to store the key as")
+    cmd_insert.add_argument(
+        'keyfile',
+        type=argparse.FileType('rb'),
+        help="The SSH private key file to insert",
     )
 
     args = parser.parse_args()

@@ -18,9 +18,9 @@ def load(args):
     privstore = (
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
-    kp = privstore.get(args.key)
+    kp = privstore.get(args.keyname)
     if not kp:
-        sys.exit(f"Key '{args.key}' not found!")
+        sys.exit(f"Key '{args.keyname}' not found!")
     try:
         Agent.addkey(kp.private())
     except AgentError as e:
@@ -63,3 +63,10 @@ def loadall(args):
                     pubstore.add(kp.name, kp.public())
             except KeyLoadError as e:
                 print(f"Error loading public key for '{kp.name}': {e}", file=sys.stderr)
+
+
+def insert(args):
+    privstore = (
+        store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
+    )
+    privstore.addkey(args.name, args.keyfile.read())
