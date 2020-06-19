@@ -70,3 +70,11 @@ def insert(args):
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
     privstore.addkey(args.name, args.keyfile.read())
+
+
+def list(args):
+    privstore = (
+        store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
+    )
+    for kp in privstore:
+        print(kp.name)

@@ -15,6 +15,9 @@ def parse_args():
     )
     sub = parser.add_subparsers(dest='cmd', description="choose an action to perform")
 
+    # list
+    sub.add_parser('list', help="lists all keys in the keystore (DEFAULT)")
+
     # load
     cmd_load = sub.add_parser('load', help="loads a single key into the agent")
     cmd_load.add_argument('keyname', help="the name of the key to load")
@@ -35,7 +38,7 @@ def parse_args():
 
     args = parser.parse_args()
     if not args.cmd:
-        parser.error("subcommand is required")
+        args.cmd = 'list'
     return args
 
 
