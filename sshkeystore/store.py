@@ -1,4 +1,5 @@
 import getpass
+import subprocess
 import glob
 import os.path
 import stat
@@ -19,16 +20,48 @@ class Keystore:
             os.mkdir(path, stat.S_IRWXU)  # 0o700
         self.store = path
 
-    def get(self, key):
-        path = os.path.split(key)
-        if path[0]:
-            raise ValueError(f"'{key}' contains a path separator")
-        elif not path[1]:
-            raise ValueError(f"'key' is empty")
-        keypath = os.path.join(self.store, path[1] + KEY_SUFFIX)
+    def get(self, name):
+        keypath = self._namepath(name)
         if not os.path.exists(keypath):
             return None
-        return keys.Keypair(keypath, key)
+        return keys.Keypair(keypath, name)
+
+    def addkey(self, name, key):
+        keypath = self._namepath(name)
+        if not len(key):
+            raise ValueError("Invalid key length: 0")
+        try:
+            subprocess.run(
+                [
+                    'gpg2',
+                    '--quiet',
+                    '--batch',
+                    '--compress-algo=none',
+                    '--no-encrypt-to',
+                    '--encrypt',
+                    '--output',
+                    keypath,
+                ]
+                + [arg for kid in self._key_ids() for arg in ('--recipient', kid)],
+                check=True,
+                input=key,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Encryption error: {e.stdout.decode().rstrip()}") from e
+
+    def _key_ids(self):
+        with open(os.path.join(self.store, '.gpg-id'), 'r') as f:
+            return [kid.strip() for kid in f]
+
+    def _namepath(self, name):
+        path = os.path.split(name)
+        if path[0]:
+            raise ValueError(f"'{name}' contains a path separator")
+        elif not path[1]:
+            raise ValueError(f"'name' is empty")
+        return os.path.join(self.store, path[1] + KEY_SUFFIX)
 
     def __iter__(self):
         return (
