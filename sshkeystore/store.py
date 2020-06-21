@@ -66,7 +66,11 @@ class Keypair:
 class Keystore:
     @classmethod
     def get_default_store(cls):
-        return cls('~/.ssh-keystore')
+        if 'SSH_KEYSTORE' in os.environ:
+            path = os.environ['SSH_KEYSTORE']
+        else:
+            path = '~/.ssh-keystore'
+        return cls(path)
 
     def __init__(self, path):
         path = os.path.abspath(os.path.expanduser(path))
@@ -135,8 +139,8 @@ class Keystore:
 class PubdirStore:
     @classmethod
     def get_default_store(cls):
-        if 'KEYLOADER_PUBKEY_PATH' in os.environ:
-            path = os.environ['KEYLOADER_PUBKEY_PATH']
+        if 'KEYSTORE_PUBKEY_PATH' in os.environ:
+            path = os.environ['KEYSTORE_PUBKEY_PATH']
         else:
             path = f'/tmp/ssh-keystore-pub_{getpass.getuser()}'
         return cls(path)
