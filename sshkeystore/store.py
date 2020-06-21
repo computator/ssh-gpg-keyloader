@@ -84,6 +84,8 @@ class Keystore:
         keypath = self._namepath(name)
         if not len(key):
             raise ValueError("Invalid key length: 0")
+        if os.path.exists(keypath):
+            raise RuntimeError(f"Key '{name}' already exists")
         try:
             subprocess.run(
                 [
@@ -116,6 +118,12 @@ class Keystore:
         elif not path[1]:
             raise ValueError(f"'name' is empty")
         return os.path.join(self.store, path[1] + KEY_SUFFIX)
+
+    def __contains__(self, name):
+        try:
+            return os.path.exists(self._namepath(name))
+        except Exception:
+            return False
 
     def __iter__(self):
         return (

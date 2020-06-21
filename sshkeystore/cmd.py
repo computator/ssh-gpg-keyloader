@@ -71,6 +71,8 @@ def insert(args):
     privstore = (
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
+    if args.name in privstore:
+        sys.exit(f"'{args.name}' is already in the store!")
     try:
         pk = ssh.PrivateKey(args.keyfile.read())
     except ValueError as e:
