@@ -17,7 +17,10 @@ def load(args):
     privstore = (
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
-    kp = privstore.get(args.keyname)
+    try:
+        kp = privstore.get(args.keyname)
+    except ValueError as e:
+        sys.exit(f"Invalid keyname: {e}")
     if not kp:
         sys.exit(f"Key '{args.keyname}' not found!")
     try:

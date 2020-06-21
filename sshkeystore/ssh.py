@@ -88,7 +88,7 @@ class PrivateKey:
                         f"Error removing passphrase: {e.stderr.decode().rstrip()}"
                     ) from e
             else:
-                raise DecryptionError("Too many failed password attempts")
+                raise DecryptionError("Incorrect passphrase entered 3 times")
             kf.seek(0)
             decrypted = kf.read()
         try:
@@ -97,7 +97,7 @@ class PrivateKey:
             raise RuntimeError(f"Invalid decrypted key: {e}") from e
         else:
             if new.encrypted:
-                raise DecryptionError("Resulting key is still encrypted")
+                raise RuntimeError("Resulting key is still encrypted")
             return new
 
 
