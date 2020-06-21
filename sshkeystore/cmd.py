@@ -68,7 +68,20 @@ def insert(args):
     privstore = (
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
-    privstore.addkey(args.name, args.keyfile.read())
+    try:
+        pk = ssh.PrivateKey(args.keyfile.read())
+    except ValueError as e:
+        sys.exit(f"Invalid keyfile: {e}")
+    if pk.encrypted:
+        print("Key is encrypted, decrypting...")
+        try:
+            pk = pk.decrypt()
+        except ssh.DecryptionError as e:
+            sys.exit(e)
+        except Exception as e:
+            raise RuntimeError(f"Error decrypting key: {e}") from e
+    privstore.addkey(args.name, pk.rawkey)
+    print(f"Successfully added '{args.name}' to the store")
 
 
 def list(args):
