@@ -1,5 +1,10 @@
 import base64
 import subprocess
+from tempfile import NamedTemporaryFile
+
+
+class DecryptionError(Exception):
+    pass
 
 
 class PrivateKey:
@@ -60,6 +65,40 @@ class PrivateKey:
                 if val.strip() == b'ENCRYPTED':
                     encrypted = True
             self.encrypted = encrypted
+
+    def decrypt(self):
+        if not self.encrypted:
+            return
+        with NamedTemporaryFile() as kf:
+            kf.write(self.rawkey)
+            kf.flush()
+            for i in range(3):
+                try:
+                    subprocess.run(
+                        ['ssh-keygen', '-p', '-f', kf.name, '-N', ''],
+                        check=True,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.PIPE,
+                    )
+                    break
+                except subprocess.CalledProcessError as e:
+                    if b'incorrect passphrase' in e.stderr:
+                        continue
+                    raise RuntimeError(
+                        f"Error removing passphrase: {e.stderr.decode().rstrip()}"
+                    ) from e
+            else:
+                raise DecryptionError("Too many failed password attempts")
+            kf.seek(0)
+            decrypted = kf.read()
+        try:
+            new = self.__class__(decrypted)
+        except Exception as e:
+            raise RuntimeError(f"Invalid decrypted key: {e}") from e
+        else:
+            if new.encrypted:
+                raise DecryptionError("Resulting key is still encrypted")
+            return new
 
 
 class AgentError(Exception):
