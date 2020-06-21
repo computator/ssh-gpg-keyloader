@@ -15,6 +15,13 @@ class PrivateKey:
         b'EC': 'ecdsa',
     }
     NEW_FORMAT = b'OPENSSH'
+    NEW_FORMAT_INT_HDR = b'openssh-key-v1\x00'
+    NEW_FORMAT_TYPES = {
+        b'ssh-rsa': 'rsa',
+        b'ssh-dss': 'dsa',
+        b'ecdsa-sha2-nistp256': 'ecdsa',
+        b'ssh-ed25519': 'ed25519',
+    }
 
     def __init__(self, keydata):
         if not isinstance(keydata, bytes):
@@ -54,17 +61,41 @@ class PrivateKey:
         self.keyinner = base64.b64decode(keydata)
 
         if self.datafmt == self.NEW_FORMAT:
-            raise NotImplementedError
+            self._parsekey_newfmt()
         else:
-            self.type = self.OLD_FORMATS[self.datafmt]
-            encrypted = False
-            if b'proc-type' in self.headers:
-                fmt, _, val = self.headers[b'proc-type'].partition(b',')
-                if int(fmt) != 4:
-                    raise ValueError("Unsupported PEM Proc-Type version")
-                if val.strip() == b'ENCRYPTED':
-                    encrypted = True
-            self.encrypted = encrypted
+            self._parsekey_oldfmt()
+
+    def _parsekey_newfmt(self):
+        keydata = self.keyinner
+        if not keydata.startswith(self.NEW_FORMAT_INT_HDR):
+            raise ValueError("Unrecognized OpenSSH key format")
+        keydata = keydata[len(self.NEW_FORMAT_INT_HDR) :]
+        params = {}
+        # get the 3 encryption headers
+        for f in 'cipher', 'kdf', 'kdfargs':
+            n, keydata = int.from_bytes(keydata[:4], 'big'), keydata[4:]
+            params[f], keydata = keydata[:n], keydata[n:]
+        # skip past keycount
+        keydata = keydata[4:]
+        # get the pubkey block
+        n, keydata = int.from_bytes(keydata[:4], 'big'), keydata[4:]
+        pubdata, keydata = keydata[:n], keydata[n:]
+        # get keytype from pubkey block
+        n, pubdata = int.from_bytes(pubdata[:4], 'big'), pubdata[4:]
+        params['keytype'], pubdata = pubdata[:n], pubdata[n:]
+        self.type = self.NEW_FORMAT_TYPES.get(params['keytype'], params['keytype'])
+        self.encrypted = params['cipher'] != b'none'
+
+    def _parsekey_oldfmt(self):
+        self.type = self.OLD_FORMATS[self.datafmt]
+        encrypted = False
+        if b'proc-type' in self.headers:
+            fmt, _, val = self.headers[b'proc-type'].partition(b',')
+            if int(fmt) != 4:
+                raise ValueError("Unsupported PEM Proc-Type version")
+            if val.strip() == b'ENCRYPTED':
+                encrypted = True
+        self.encrypted = encrypted
 
     def decrypt(self):
         if not self.encrypted:
