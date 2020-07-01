@@ -17,25 +17,37 @@ def load(args):
     privstore = (
         store.Keystore(args.store) if args.store else store.Keystore.get_default_store()
     )
-    try:
-        kp = privstore.get(args.keyname)
-    except ValueError as e:
-        sys.exit(f"Invalid keyname: {e}")
-    if not kp:
-        sys.exit(f"Key '{args.keyname}' not found!")
-    try:
-        ssh.Agent.addkey(kp.private())
-    except ssh.AgentError as e:
-        print(f"Error adding key '{kp.name}' to ssh.Agent: {e}", file=sys.stderr)
-    except store.KeyLoadError as e:
-        print(f"Error loading key '{kp.name}': {e}", file=sys.stderr)
-    else:
-        print(f"Added '{kp.name}'")
+    failed = False
+    for key in args.keys:
         try:
+            kp = privstore.get(key)
+        except ValueError as e:
+            print(f"Invalid key '{key}': {e}", file=sys.stderr)
+            failed = True
+            continue
+        if not kp:
+            print(f"Key '{key}' not found!", file=sys.stderr)
+            failed = True
+            continue
+        try:
+            ssh.Agent.addkey(kp.private())
+            print(f"Added '{kp.name}'")
             if pubstore:
-                pubstore.add(kp.name, kp.public())
+                try:
+                    pubstore.add(kp.name, kp.public())
+                except store.KeyLoadError as e:
+                    print(
+                        f"Error loading public key for '{kp.name}': {e}",
+                        file=sys.stderr,
+                    )
+        except ssh.AgentError as e:
+            print(f"Error adding key '{kp.name}' to ssh.Agent: {e}", file=sys.stderr)
+            failed = True
         except store.KeyLoadError as e:
-            print(f"Error loading public key for '{kp.name}': {e}", file=sys.stderr)
+            print(f"Error loading key '{kp.name}': {e}", file=sys.stderr)
+            failed = True
+    if failed:
+        sys.exit(1)
 
 
 def loadall(args):

@@ -20,7 +20,9 @@ def parse_args():
 
     # load
     cmd_load = sub.add_parser('load', help="loads a single key into the agent")
-    cmd_load.add_argument('keyname', help="the name of the key to load")
+    cmd_load.add_argument(
+        'keys', nargs='+', metavar="keyname", help="the name of the key to load"
+    )
 
     # loadall
     sub.add_parser('loadall', help="loads all keys in the keystore into the agent")
