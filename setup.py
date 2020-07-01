@@ -7,7 +7,7 @@ setup(
     packages=['sshkeystore'],
     entry_points={
         'console_scripts': [
-            'sshkeystore=sshkeystore:cli',
+            'sshks=sshkeystore:cli',
         ]
     }
 )

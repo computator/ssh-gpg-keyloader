@@ -69,7 +69,7 @@ class Keystore:
         if 'SSH_KEYSTORE' in os.environ:
             path = os.environ['SSH_KEYSTORE']
         else:
-            path = '~/.ssh-keystore'
+            path = '~/.sshkeystore'
         return cls(path)
 
     def __init__(self, path):
@@ -142,7 +142,7 @@ class PubdirStore:
         if 'KEYSTORE_PUBKEY_PATH' in os.environ:
             path = os.environ['KEYSTORE_PUBKEY_PATH']
         else:
-            path = f'/tmp/ssh-keystore-pub_{getpass.getuser()}'
+            path = f'/tmp/sshkeystore-pub_{getpass.getuser()}'
         return cls(path)
 
     def __init__(self, path):
