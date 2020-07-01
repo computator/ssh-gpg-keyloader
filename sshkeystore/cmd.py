@@ -81,7 +81,7 @@ def insert(args):
         print("Key is encrypted, decrypting...")
         try:
             pk = pk.decrypt()
-        except ssh.DecryptionError as e:
+        except ssh.PassphraseError as e:
             sys.exit(e)
         except Exception as e:
             raise RuntimeError(f"Error decrypting key: {e}") from e

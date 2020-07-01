@@ -7,6 +7,14 @@ class DecryptionError(Exception):
     pass
 
 
+class PassphraseError(Exception):
+    pass
+
+
+class InvalidKeyError(Exception):
+    pass
+
+
 class PrivateKey:
     WRAP_FMT_STR = b'-----%b %b PRIVATE KEY-----'
     OLD_FORMATS = {
@@ -115,20 +123,20 @@ class PrivateKey:
                 except subprocess.CalledProcessError as e:
                     if b'incorrect passphrase' in e.stderr:
                         continue
-                    raise RuntimeError(
+                    raise DecryptionError(
                         f"Error removing passphrase: {e.stderr.decode().rstrip()}"
                     ) from e
             else:
-                raise DecryptionError("Incorrect passphrase entered 3 times")
+                raise PassphraseError("Incorrect passphrase entered 3 times")
             kf.seek(0)
             decrypted = kf.read()
         try:
             new = self.__class__(decrypted)
         except Exception as e:
-            raise RuntimeError(f"Invalid decrypted key: {e}") from e
+            raise InvalidKeyError(f"Invalid decrypted key: {e}") from e
         else:
             if new.encrypted:
-                raise RuntimeError("Resulting key is still encrypted")
+                raise DecryptionError("Resulting key is still encrypted")
             return new
 
 
