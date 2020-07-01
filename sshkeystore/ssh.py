@@ -40,6 +40,7 @@ class PrivateKey:
         self.type = None
         self.keyinner = None
         self.encrypted = False
+        self._public = None
         self._parsekey()
 
     def _parsekey(self):
@@ -138,6 +139,24 @@ class PrivateKey:
             if new.encrypted:
                 raise DecryptionError("Resulting key is still encrypted")
             return new
+
+    def get_public(self):
+        if self._public:
+            return self._public
+        try:
+            key = subprocess.run(
+                ['ssh-keygen', '-y', '-f', '/proc/self/fd/0'],
+                check=True,
+                input=self.rawkey if not self.encrypted else self.decrypt().rawkey,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).stdout
+            if not key:
+                raise InvalidKeyError("Invalid key length: 0")
+            self._public = key.decode().strip()
+            return self._public
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Conversion error: {e.stderr.decode().rstrip()}") from e
 
 
 class AgentError(Exception):
