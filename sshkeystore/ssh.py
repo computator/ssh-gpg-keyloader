@@ -45,6 +45,8 @@ class PrivateKey:
 
     def _parsekey(self):
         keydata = self.rawkey.strip()
+        if not keydata:
+            raise ValueError("Invalid key length: 0")
         for fmt in list(self.OLD_FORMATS) + [self.NEW_FORMAT]:
             if keydata.startswith(self.WRAP_FMT_STR % (b'BEGIN', fmt)):
                 if not keydata.endswith(self.WRAP_FMT_STR % (b'END', fmt)):
@@ -171,7 +173,7 @@ class Agent:
             output = subprocess.run(
                 ['ssh-add', '-k', '-q', '-'],
                 check=True,
-                input=key,
+                input=key.rawkey,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             ).stdout

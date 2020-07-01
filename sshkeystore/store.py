@@ -4,6 +4,8 @@ import os.path
 import stat
 import subprocess
 
+from . import ssh
+
 KEY_SUFFIX = '.key.gpg'
 
 
@@ -34,30 +36,15 @@ class Keypair:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             ).stdout
-            if not key:
-                raise KeyLoadError("Invalid key length: 0")
-            self._private = key
+            self._private = ssh.PrivateKey(key)
             return self._private
         except subprocess.CalledProcessError as e:
             raise KeyLoadError(f"Decryption error: {e.stderr.decode().rstrip()}") from e
 
     def public(self):
-        if self._public:
-            return self._public
-        try:
-            key = subprocess.run(
-                ['ssh-keygen', '-y', '-f', '/proc/self/fd/0'],
-                check=True,
-                input=self.private(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ).stdout
-            if not key:
-                raise KeyLoadError("Invalid key length: 0")
-            self._public = f'{key.decode().strip()} sshkeystore:{self.name}'
-            return self._public
-        except subprocess.CalledProcessError as e:
-            raise KeyLoadError(f"Conversion error: {e.stderr.decode().rstrip()}") from e
+        if not self._public:
+            self._public = self.private().get_public(f'sshkeystore:{self.name}')
+        return self._public
 
     def __repr__(self):
         return f"{__class__.__name__}({self.keypath!r}, {self.name!r})"
