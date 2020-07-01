@@ -140,23 +140,24 @@ class PrivateKey:
                 raise DecryptionError("Resulting key is still encrypted")
             return new
 
-    def get_public(self):
-        if self._public:
-            return self._public
-        try:
-            key = subprocess.run(
-                ['ssh-keygen', '-y', '-f', '/proc/self/fd/0'],
-                check=True,
-                input=self.rawkey if not self.encrypted else self.decrypt().rawkey,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ).stdout
-            if not key:
-                raise InvalidKeyError("Invalid key length: 0")
-            self._public = key.decode().strip()
-            return self._public
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Conversion error: {e.stderr.decode().rstrip()}") from e
+    def get_public(self, comment=None):
+        if not self._public:
+            try:
+                key = subprocess.run(
+                    ['ssh-keygen', '-y', '-f', '/proc/self/fd/0'],
+                    check=True,
+                    input=self.rawkey if not self.encrypted else self.decrypt().rawkey,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ).stdout
+                if not key:
+                    raise InvalidKeyError("Invalid key length: 0")
+                self._public = key.decode().strip()
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(
+                    f"Conversion error: {e.stderr.decode().rstrip()}"
+                ) from e
+        return self._public + ' ' + comment if comment else self._public
 
 
 class AgentError(Exception):
