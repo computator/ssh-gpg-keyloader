@@ -1,9 +1,23 @@
+try:
+    from importlib import metadata
+except ImportError:
+    import importlib_metadata as metadata
+
+try:
+    __version__ = metadata.version(__name__)
+except metadata.PackageNotFoundError:
+    pass
+
 import argparse
 
 from . import cmd
 
 
 def parse_args():
+    try:
+        ver = __version__
+    except NameError:
+        ver = 'unknown_ver'
     parser = argparse.ArgumentParser(
         description="Manage a directory of GPG encrypted SSH keys"
     )
@@ -13,6 +27,7 @@ def parse_args():
         '--pubdir',
         help="temporary location to store the corresponding public keys",
     )
+    parser.add_argument('-V', '--version', action='version', version=f'%(prog)s {ver}')
     sub = parser.add_subparsers(dest='cmd', description="choose an action to perform")
 
     # list

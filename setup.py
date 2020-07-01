@@ -9,5 +9,8 @@ setup(
         'console_scripts': [
             'sshks=sshkeystore:cli',
         ]
-    }
+    },
+    python_requires='>=3',
+    setup_requires=['setuptools_scm'],
+    use_scm_version=True,
 )
