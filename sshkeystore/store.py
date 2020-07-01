@@ -163,4 +163,4 @@ class PubdirStore:
                 stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH  # 0o744
             )
             os.chmod(fno, newmode)
-            f.write(pubkey)
+            f.write(pubkey.rstrip() + '\n')
