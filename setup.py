@@ -10,6 +10,9 @@ setup(
             'sshks=sshkeystore:cli',
         ]
     },
+    install_requires=[
+        'importlib-metadata>=1.0; python_version<"3.8"',
+    ],
     python_requires='>=3',
     setup_requires=['setuptools_scm'],
     use_scm_version=True,
