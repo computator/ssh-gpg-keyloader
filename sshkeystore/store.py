@@ -31,7 +31,7 @@ class Keypair:
             return self._private
         try:
             key = subprocess.run(
-                ['gpg2', '--quiet', '--batch', '--decrypt', self.keypath],
+                ['gpg', '--quiet', '--batch', '--decrypt', self.keypath],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
