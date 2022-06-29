@@ -177,7 +177,7 @@ class Agent:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             ).stdout
-            if output != b'Identity added: (stdin) ((stdin))\n':
+            if output not in {b'', b'Identity added: (stdin) ((stdin))\n'}:
                 raise AgentError(f"Unexpected output: {output.decode().rstrip()}")
         except subprocess.CalledProcessError as e:
             raise AgentError(f"Add error: {e.stdout.decode().rstrip()}") from e
