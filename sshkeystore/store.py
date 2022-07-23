@@ -80,7 +80,7 @@ class Keystore:
         try:
             subprocess.run(
                 [
-                    'gpg2',
+                    'gpg',
                     '--quiet',
                     '--batch',
                     '--compress-algo=none',
